@@ -133,25 +133,39 @@ public class web3js extends bases {
     /**
      * Llama a una función remota que consume gas (firmándola) utilizando transacciones raw
      * @param remoteFunctionCall
+     * @param resultado
      * @param ok
      * @param extras_array
      * @return
      * @throws Exception 
      */
-    public TransactionReceipt _firmar_y_llamar_funcion_con_gas(RemoteFunctionCall<TransactionReceipt> remoteFunctionCall, oks ok, Object ... extras_array) throws Exception {
+    public TransactionReceipt _firmar_y_llamar_funcion_con_gas(RemoteFunctionCall<?> remoteFunctionCall, StringBuilder resultado
+      , oks ok, Object ... extras_array) throws Exception {
+        String encodedFunction_tex = remoteFunctionCall.encodeFunctionCall();
+        return _firmar_y_llamar_funcion_con_gas(encodedFunction_tex, resultado, ok, extras_array);
+    }
+    /**
+     * Llama a una función remota que consume gas (firmándola) utilizando transacciones raw
+     * @param encodedFunction_tex
+     * @param resultado
+     * @param ok
+     * @param extras_array
+     * @return
+     * @throws Exception 
+     */
+    public TransactionReceipt _firmar_y_llamar_funcion_con_gas(String encodedFunction_tex, StringBuilder resultado
+      , oks ok, Object ... extras_array) throws Exception {
         TransactionReceipt transactionReceipt = null;
         ResourceBundle in;
         in = ResourceBundles.getBundle(k_in_ruta);
         try {
             if (ok.es == false) { return null; }
-            String encodedFunction_tex;
             BigInteger nonce;
             RawTransaction rawTransaction;
             String transaccion_firmada;
             EthSendTransaction ethSendTransaction = null;
             String txHashLocal = null;
             String txHashRemoto = null;
-            encodedFunction_tex = remoteFunctionCall.encodeFunctionCall();
             nonce = obtener_nonce(credentials.getAddress(), ok);
             if (ok.es == false) { return null; }
             rawTransaction = RawTransaction.createTransaction(nonce
@@ -173,6 +187,9 @@ public class web3js extends bases {
                 }                
             }
             if (ok.es == false) { return null; }
+            if (resultado != null) {
+                resultado.replace(0, resultado.length(), ethSendTransaction.getResult());
+            }
             transactionReceipt = obtener_recibo_de_transaccion(txHashRemoto, ok, extras_array);
         } catch (Exception e) {
             ok.setTxt(e); 
@@ -209,12 +226,23 @@ public class web3js extends bases {
      * @throws Exception 
      */
     public EthCall llamar_funcion_sin_gas(RemoteFunctionCall<?> remoteFunctionCall, oks ok, Object ... extras_array) throws Exception {
+        String encodedFunction_tex = remoteFunctionCall.encodeFunctionCall();
+        return llamar_funcion_sin_gas(encodedFunction_tex,ok, extras_array);
+    }
+    /**
+     * Llama a una función remota que no consume gas utilizando createEthCallTransaction
+     * @param encodedFunction_tex
+     * @param ok
+     * @param extras_array
+     * @return
+     * @throws Exception 
+     */
+    public EthCall llamar_funcion_sin_gas(String encodedFunction_tex, oks ok, Object ... extras_array) throws Exception {
         EthCall ethCall = null;
         ResourceBundle in;
         in = ResourceBundles.getBundle(k_in_ruta);
         try {
             if (ok.es == false) { return null; }
-            String encodedFunction_tex = remoteFunctionCall.encodeFunctionCall();
             BigInteger nonce = obtener_nonce(credentials.getAddress(), ok);
             if (ok.es == false) { return null; }
             Transaction transaction = Transaction.createEthCallTransaction(credentials.getAddress()
@@ -240,27 +268,33 @@ public class web3js extends bases {
         return ethCall;
     }
     /**
-     * Valida el gas aceptable según el que se estima que es necesario para pagar una transacción con gas.
-     * @param gas_aceptable
+     * Valida el gas aceptable según el que se estima que es necesario para pagar una transacción con gas.Si el gas_aceptable es menor de 0 no se compara con el gas estimado, ni con el gas disponible.
+     * Si el gas disponible es menor de 0 no se utiliza para las comprobaciones. 
+     * @param gas_aceptable 
+     * @param milisegundos 
      * @param remoteFunctionCall
      * @param ok
      * @param extras_array
      * @return
      * @throws Exception 
      */
-    public boolean estimar_gas(BigInteger gas_aceptable, RemoteFunctionCall<?> remoteFunctionCall, oks ok, Object ... extras_array) throws Exception {
+    public boolean estimar_gas(BigInteger gas_aceptable, Long milisegundos, RemoteFunctionCall<?> remoteFunctionCall, oks ok, Object ... extras_array) throws Exception {
         ResourceBundle in;
         try {
             if (ok.es == false) { return false; }
-            String encodedFunction_tex = remoteFunctionCall.encodeFunctionCall();
-            BigInteger gas_estimado = estimar_gas(encodedFunction_tex, ok, extras_array);
-            if (ok.es == false) { return false; }
-            if (gas_estimado.compareTo(gas_aceptable) > 0) {
-                in = ResourceBundles.getBundle(k_in_ruta);
-                ok.setTxt(tr.in(in, "El coste estimado de gas es mayor que el máximo aceptable configurado: ") + gas_aceptable.toString(), extras_array);
-            } else if (gas_estimado.compareTo(web3_gas_disponible_total) > 0) {
-                in = ResourceBundles.getBundle(k_in_ruta);
-                ok.setTxt(tr.in(in, "El coste estimado de gas es mayor que el gas disponible configurado: ") + web3_gas_disponible_total.toString(), extras_array);
+            if (gas_aceptable.compareTo(BigInteger.ZERO) >= 0) {
+                String encodedFunction_tex = remoteFunctionCall.encodeFunctionCall();
+                BigInteger gas_estimado = estimar_gas(encodedFunction_tex, milisegundos, ok, extras_array);
+                if (ok.es == false) { return false; }
+                if (gas_estimado.compareTo(gas_aceptable) > 0) {
+                    in = ResourceBundles.getBundle(k_in_ruta);
+                    ok.setTxt(tr.in(in, "El coste estimado de gas es mayor que el máximo aceptable configurado: ") + gas_aceptable.toString(), extras_array);
+                } else if (gas_estimado.compareTo(web3_gas_disponible_total) > 0) {
+                    if (web3_gas_disponible_total.compareTo(BigInteger.ZERO) >= 0) {
+                        in = ResourceBundles.getBundle(k_in_ruta);
+                        ok.setTxt(tr.in(in, "El coste estimado de gas es mayor que el gas disponible configurado: ") + web3_gas_disponible_total.toString(), extras_array);
+                    }
+                }
             }
         } catch (Exception e) {
             ok.setTxt(e); 
@@ -270,17 +304,37 @@ public class web3js extends bases {
     /**
      * Estima el gas necesario para pagar una transacción con gas.
      * @param encodedFunction
+     * @param milisegundos Teimpo de espera máximo para obtener el gas estimado.
      * @param ok
      * @param extras_array
      * @return
      * @throws Exception 
      */
-    public BigInteger estimar_gas(String encodedFunction, oks ok, Object ... extras_array) throws Exception {
+    public BigInteger estimar_gas(String encodedFunction, Long milisegundos, oks ok, Object ... extras_array) throws Exception {
+        ResourceBundle in;
         try {
             if (ok.es == false) { return null; }
+            EthEstimateGas ethEstimateGas = null;
             Transaction transaction = Transaction.createEthCallTransaction(credentials.getAddress()
-                    , web3_direccion_contrato, encodedFunction);
-            EthEstimateGas ethEstimateGas = web3j.ethEstimateGas(transaction).sendAsync().get();
+              , web3_direccion_contrato, encodedFunction);
+            Date date = new Date();
+            Long tiempo_actual = date.getTime();
+            Long tiempo_final = tiempo_actual + milisegundos;
+            while (true) {
+                if (tiempo_actual >= tiempo_final) {
+                    ok.id = k_comprobar_y_esperar_recibo_tiempo_excedido;
+                    in = ResourceBundles.getBundle(k_in_ruta);
+                    ok.setTxt(tr.in(in, "No se ha podido recuperar el recibo en el tiempo establecido. "));
+                    break;
+                }
+                ethEstimateGas = web3j.ethEstimateGas(transaction).sendAsync().get();
+                if (ethEstimateGas.hasError()== false) {
+                    break;
+                } if (ethEstimateGas.getResult() == null) {
+                    Threads.sleep(k_tiempo_durmiendo_milisegundos, ok);
+                    if (ok.es == false) { return null; }
+                }
+            }
             return ethEstimateGas.getAmountUsed();
         } catch (Exception e) {
             ok.setTxt(e); 
@@ -288,8 +342,8 @@ public class web3js extends bases {
         return null;
     }
     /**
-     * Resta el gas usado
-     * @param gas_usado
+     * Resta el gas usado (Si web3_gas_disponible_total es menor de 0 no se resta.)
+     * @param gas_usado 
      * @param ok
      * @param extras_array
      * @return El gas restante
@@ -298,7 +352,9 @@ public class web3js extends bases {
     public BigInteger restar_gas(BigInteger gas_usado, oks ok, Object ... extras_array) throws Exception {
         try {
             if (ok.es == false) { return null; }
-            web3_gas_disponible_total = web3_gas_disponible_total.subtract(gas_usado);            
+            if (web3_gas_disponible_total.compareTo(BigInteger.ZERO) >= 0) {
+                web3_gas_disponible_total = web3_gas_disponible_total.subtract(gas_usado);
+            }
         } catch (Exception e) {
             throw e;
         }
@@ -308,19 +364,20 @@ public class web3js extends bases {
      * Llama a la función con gasto de gas de un contrato inteligente
      * @param remoteFunctionCall
      * @param gas_aceptable
+     * @param resultado
      * @param ok
      * @param extras_array
      * @return El hash de la trasaccion
      * @throws Exception 
      */
-    public TransactionReceipt firmar_y_llamar_funcion_con_gas(RemoteFunctionCall<TransactionReceipt> remoteFunctionCall
-      , BigInteger gas_aceptable, oks ok, Object ... extras_array) throws Exception {
+    public TransactionReceipt firmar_y_llamar_funcion_con_gas(RemoteFunctionCall<?> remoteFunctionCall
+      , BigInteger gas_aceptable, StringBuilder resultado, oks ok, Object ... extras_array) throws Exception {
         TransactionReceipt transactionReceipt = null;
         try {
             if (ok.es == false) { return null; }
-            estimar_gas(gas_aceptable, remoteFunctionCall, ok, extras_array);
+            estimar_gas(gas_aceptable, k_tiempo_maximo_esperando_milisegundos, remoteFunctionCall, ok, extras_array);
             if (ok.es == false) { return null; }
-            transactionReceipt = _firmar_y_llamar_funcion_con_gas(remoteFunctionCall, ok); // Forma peor
+            transactionReceipt = _firmar_y_llamar_funcion_con_gas(remoteFunctionCall, resultado, ok); // Forma con más código
             if (ok.es == false) { return null; }
 //            transactionReceipt = remoteFunctionCall.send(); // Forma directa
             transactionReceipt = comprobar_y_esperar_recibo(transactionReceipt
@@ -370,6 +427,7 @@ public class web3js extends bases {
                         Threads.sleep(k_tiempo_durmiendo_milisegundos, ok);
                         if (ok.es == false) { return null; }
                     } else {
+                        if (ok.es == false) { return null; }
                         break;
                     }
                 }

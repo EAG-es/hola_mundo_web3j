@@ -1,5 +1,6 @@
 package inclui.web3j.hola_mundo_web3j;
 
+import inclui.web3j.hola_mundo_web3j.Bases_web3j.acls;
 import inclui.web3j.web3js;
 import innui.modelos.configuraciones.ResourceBundles;
 import innui.modelos.configuraciones.iniciales;
@@ -7,6 +8,7 @@ import innui.modelos.errores.oks;
 import innui.modelos.modelos;
 import static java.lang.System.exit;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -61,7 +63,8 @@ public class Hola_mundo_web3j extends iniciales {
             if (ok.es == false) { return ok.es; }
             ResourceBundle in = null;
             iniciar(ok);
-            if (ok.es) { 
+            if (ok.es) {
+                acls acl;
                 in = ResourceBundles.getBundle(k_in_ruta);
                 // Inicio del código propio de la aplicación
                 while (true) {
@@ -69,9 +72,15 @@ public class Hola_mundo_web3j extends iniciales {
                     if (ok.es == false) { break; }
                     bases_web3j.cargar_contrato_hola_mundos(web3j.web3_direccion_contrato, ok, extras_array);
                     if (ok.es == false) { break; }
-                    bases_web3j.leer_acl_array(BigInteger.valueOf(0), ok, extras_array);
+                    bases_web3j.actualizar_administrador_clave(web3j.web3_gas_aceptable_por_transaccion, "clave", ok, extras_array);
                     if (ok.es == false) { break; }
-                    bases_web3j.leer_acl_array(BigInteger.valueOf(3), ok, extras_array);
+                    acl = bases_web3j.leer_acl_array(BigInteger.valueOf(1), ok, extras_array);
+                    if (ok.es == false) { break; }
+                    acl.permisos_lista.add("premiso_de_prueba");
+                    if (ok.es == false) { break; }
+                    bases_web3j.actualizar_administrador(web3j.web3_gas_aceptable_por_transaccion, acl, ok, extras_array);
+                    if (ok.es == false) { break; }
+                    List<String> permisos_lista = bases_web3j.leer_administrador_permisos_array(BigInteger.valueOf(1), ok, extras_array);
                     if (ok.es == false) { break; }
                     bases_web3j.leer_estado(ok, extras_array);
                     if (ok.es == false) { break; }
