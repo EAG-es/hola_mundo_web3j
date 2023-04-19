@@ -271,20 +271,19 @@ public class web3js extends bases {
      * Valida el gas aceptable según el que se estima que es necesario para pagar una transacción con gas.Si el gas_aceptable es menor de 0 no se compara con el gas estimado, ni con el gas disponible.
      * Si el gas disponible es menor de 0 no se utiliza para las comprobaciones. 
      * @param gas_aceptable 
-     * @param milisegundos 
      * @param remoteFunctionCall
      * @param ok
      * @param extras_array
      * @return
      * @throws Exception 
      */
-    public boolean estimar_gas(BigInteger gas_aceptable, Long milisegundos, RemoteFunctionCall<?> remoteFunctionCall, oks ok, Object ... extras_array) throws Exception {
+    public boolean estimar_gas(BigInteger gas_aceptable, RemoteFunctionCall<?> remoteFunctionCall, oks ok, Object ... extras_array) throws Exception {
         ResourceBundle in;
         try {
             if (ok.es == false) { return false; }
             if (gas_aceptable.compareTo(BigInteger.ZERO) >= 0) {
                 String encodedFunction_tex = remoteFunctionCall.encodeFunctionCall();
-                BigInteger gas_estimado = estimar_gas(encodedFunction_tex, milisegundos, ok, extras_array);
+                BigInteger gas_estimado = estimar_gas(encodedFunction_tex, ok, extras_array);
                 if (ok.es == false) { return false; }
                 if (gas_estimado.compareTo(gas_aceptable) > 0) {
                     in = ResourceBundles.getBundle(k_in_ruta);
@@ -304,38 +303,26 @@ public class web3js extends bases {
     /**
      * Estima el gas necesario para pagar una transacción con gas.
      * @param encodedFunction
-     * @param milisegundos Teimpo de espera máximo para obtener el gas estimado.
      * @param ok
      * @param extras_array
      * @return
      * @throws Exception 
      */
-    public BigInteger estimar_gas(String encodedFunction, Long milisegundos, oks ok, Object ... extras_array) throws Exception {
+    public BigInteger estimar_gas(String encodedFunction, oks ok, Object ... extras_array) throws Exception {
         ResourceBundle in;
         try {
             if (ok.es == false) { return null; }
             EthEstimateGas ethEstimateGas = null;
             Transaction transaction = Transaction.createEthCallTransaction(credentials.getAddress()
               , web3_direccion_contrato, encodedFunction);
-            Date date = new Date();
-            Long tiempo_actual = date.getTime();
-            Long tiempo_final = tiempo_actual + milisegundos;
-            while (true) {
-                if (tiempo_actual >= tiempo_final) {
-                    ok.id = k_comprobar_y_esperar_recibo_tiempo_excedido;
-                    in = ResourceBundles.getBundle(k_in_ruta);
-                    ok.setTxt(tr.in(in, "No se ha podido recuperar el recibo en el tiempo establecido. "));
-                    break;
-                }
-                ethEstimateGas = web3j.ethEstimateGas(transaction).sendAsync().get();
-                if (ethEstimateGas.hasError()== false) {
-                    break;
-                } if (ethEstimateGas.getResult() == null) {
-                    Threads.sleep(k_tiempo_durmiendo_milisegundos, ok);
-                    if (ok.es == false) { return null; }
-                }
+            ethEstimateGas = web3j.ethEstimateGas(transaction).sendAsync().get();
+            if (ethEstimateGas.hasError()) {
+                in = ResourceBundles.getBundle(k_in_ruta);
+                ok.setTxt(tr.in(in, "Error estimando el gas (error en la función). "), ethEstimateGas.getError().getMessage());
+                return null;
+            } else {
+                return ethEstimateGas.getAmountUsed();
             }
-            return ethEstimateGas.getAmountUsed();
         } catch (Exception e) {
             ok.setTxt(e); 
         }
@@ -375,11 +362,10 @@ public class web3js extends bases {
         TransactionReceipt transactionReceipt = null;
         try {
             if (ok.es == false) { return null; }
-            estimar_gas(gas_aceptable, k_tiempo_maximo_esperando_milisegundos, remoteFunctionCall, ok, extras_array);
+            estimar_gas(gas_aceptable, remoteFunctionCall, ok, extras_array);
             if (ok.es == false) { return null; }
             transactionReceipt = _firmar_y_llamar_funcion_con_gas(remoteFunctionCall, resultado, ok); // Forma con más código
             if (ok.es == false) { return null; }
-//            transactionReceipt = remoteFunctionCall.send(); // Forma directa
             transactionReceipt = comprobar_y_esperar_recibo(transactionReceipt
                   , k_tiempo_maximo_esperando_milisegundos, ok, extras_array);
             if (ser_recibo_vacio(transactionReceipt, ok) == false) {

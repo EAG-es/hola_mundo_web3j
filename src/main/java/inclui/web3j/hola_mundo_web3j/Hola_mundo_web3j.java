@@ -8,6 +8,7 @@ import innui.modelos.errores.oks;
 import innui.modelos.modelos;
 import static java.lang.System.exit;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -72,28 +73,48 @@ public class Hola_mundo_web3j extends iniciales {
                     if (ok.es == false) { break; }
                     bases_web3j.cargar_contrato_hola_mundos(web3j.web3_direccion_contrato, ok, extras_array);
                     if (ok.es == false) { break; }
-                    bases_web3j.actualizar_administrador_clave(web3j.web3_gas_aceptable_por_transaccion, "clave", ok, extras_array);
-                    if (ok.es == false) { break; }
-                    acl = bases_web3j.leer_acl_array(BigInteger.valueOf(1), ok, extras_array);
-                    if (ok.es == false) { break; }
-                    acl.permisos_lista.add("premiso_de_prueba");
-                    if (ok.es == false) { break; }
-                    bases_web3j.actualizar_administrador(web3j.web3_gas_aceptable_por_transaccion, acl, ok, extras_array);
-                    if (ok.es == false) { break; }
-                    List<String> permisos_lista = bases_web3j.leer_administrador_permisos_array(BigInteger.valueOf(1), ok, extras_array);
-                    if (ok.es == false) { break; }
-                    bases_web3j.leer_estado(ok, extras_array);
-                    if (ok.es == false) { break; }
-                    bases_web3j.inactivar(web3j.web3_gas_aceptable_por_transaccion, ok, extras_array);
-                    if (ok.es == false) { break; }
-                    bases_web3j.limitar(web3j.web3_gas_aceptable_por_transaccion, ok, extras_array);
-                    if (ok.es == false) { break; }
-                    bases_web3j.activar(web3j.web3_gas_aceptable_por_transaccion, ok, extras_array);
-                    if (ok.es == false) { break; }
+                    //Remix: crear_administrador: 0x6f24CA95cF4814025b8Ff6ED76E490b353abFDFd, "web3j_base", 0x726f6f745f636c617665, [0x7065726D69736F5F6D6178696D6F000000000000000000000000000000000000]
+                    //Remix: actualizar_administrador_permisos_array: 0x6f24CA95cF4814025b8Ff6ED76E490b353abFDFd, [0x7065726D69736F5F6D6178696D6F000000000000000000000000000000000000]
+                    //Remix: actualizar_administrador_usuario_clave_direccion: 0x6f24CA95cF4814025b8Ff6ED76E490b353abFDFd, "web3j", 0x776562336a5f636c617665000000000000000000000000000000000000000000,  0x0000000000000000000000000000000000000000
+                    // bytes de web3j_base: 0x776562336a5f62617365
+                    // bytes de root_clave 0x726f6f745f636c617665
+//                    bases_web3j.actualizar_administrador_usuario_clave_direccion(web3j.web3_gas_aceptable_por_transaccion, "web3j", "web3j_base", "", ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    bases_web3j.actualizar_administrador_usuario_clave_direccion(web3j.web3_gas_aceptable_por_transaccion, web3j.credentials.getAddress(), "", "web3j_clave", "", ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    acl = bases_web3j.leer_acl_array(BigInteger.valueOf(1), ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    acl.permisos_lista.add("premiso_de_prueba");
+//                    if (ok.es == false) { break; }
+//                    bases_web3j.actualizar_administrador_permisos_array(web3j.web3_gas_aceptable_por_transaccion, web3j.credentials.getAddress(), acl.permisos_lista, ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    bases_web3j.crear_administrador(web3j.web3_gas_aceptable_por_transaccion, "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4", "usuario", "clave", null, ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    bases_web3j.borrar_administrador(web3j.web3_gas_aceptable_por_transaccion, "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4", ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    Boolean resultado = bases_web3j.ser_administrador(web3j.credentials.getAddress(), ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    resultado = bases_web3j.ser_administrador_con_permiso(web3j.credentials.getAddress(), "permiso_maximo", ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    List<String> permisos_lista = Arrays.asList("permiso_maximo", "premiso_de_prueba");
+//                    resultado = bases_web3j.ser_administrador_con_algun_permiso(web3j.credentials.getAddress(), permisos_lista, ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    permisos_lista = Arrays.asList("permiso_maximo", "premiso_de_prueba");
+//                    resultado = bases_web3j.ser_administrador_con_todo_permiso(web3j.credentials.getAddress(), permisos_lista, ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    bases_web3j.leer_estado(ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    bases_web3j.inactivar(web3j.web3_gas_aceptable_por_transaccion, ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    bases_web3j.limitar(web3j.web3_gas_aceptable_por_transaccion, ok, extras_array);
+//                    if (ok.es == false) { break; }
+//                    bases_web3j.activar(web3j.web3_gas_aceptable_por_transaccion, ok, extras_array);
+//                    if (ok.es == false) { break; }
                     hola_mundos_web3j.cargar_contrato_hola_mundos(web3j.web3_direccion_contrato, ok);
                     if (ok.es == false) { break; }
-                    hola_mundos_web3j.leer(ok);
+                    String resultado = hola_mundos_web3j.leer(ok);
                     if (ok.es == false) { break; }
+                    escribir_linea(resultado, ok, extras_array);
                     break;
                 }
                 // Fin del código propio de la aplicación

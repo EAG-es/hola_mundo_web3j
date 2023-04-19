@@ -34,57 +34,6 @@ public class Bases_web3j extends bases {
         public String usuario;
         public byte [] clave_sha256;
         public List<String> permisos_lista; 
-        /**
-         * Convierte a una estructura de contrato Bases.acl
-         * @param ok
-         * @param extras_array
-         * @return
-         * @throws Exception 
-         */
-        public Bases.acls convertir(oks ok, Object ... extras_array) throws Exception {
-            Bases.acls bases_acl = null;
-            try {
-                if (ok.es == false) { return null; }
-                byte [] bytes_array;
-                byte [] bytes32_array;
-                LinkedList<byte []> permisos_bytes_array_lista = new LinkedList<>();
-                for (String texto: permisos_lista) {
-                    bytes_array = texto.getBytes();
-                    bytes32_array = Bytes__.ajustar(bytes_array, 32, ok, extras_array);
-                    permisos_bytes_array_lista.add(bytes32_array);
-                }
-                bases_acl = new Bases.acls(direccion, usuario, clave_sha256, permisos_bytes_array_lista);
-            } catch (Exception e) {
-                throw e;
-            }
-            return bases_acl;
-        }
-        /**
-         * Convierte una estructura de contrato Bases.acl a acl
-         * @param bases_acl
-         * @param ok
-         * @param extras_array
-         * @return
-         * @throws Exception 
-         */
-        public static acls desconvertir(Bases.acls bases_acl, oks ok, Object ... extras_array) throws Exception {
-            acls acl = null;
-            try {
-                if (ok.es == false) { return null; }
-                acl = new acls();
-                acl.direccion = bases_acl.direccion;
-                acl.usuario = bases_acl.usuario;
-                acl.clave_sha256 = bases_acl.clave;
-                acl.permisos_lista = new LinkedList<>();
-                for (byte [] bytes_array: bases_acl.permisos_array) {
-                    acl.permisos_lista.add(new String(bytes_array));
-                }
-                
-            } catch (Exception e) {
-                throw e;
-            }
-            return acl;
-        }
     }
     
     /** 
@@ -227,11 +176,30 @@ public class Bases_web3j extends bases {
         }
         return permisos_lista;
     }
-    
-    public boolean actualizar_administrador_clave(BigInteger gas_aceptable, String clave_nueva, oks ok, Object ... extras_array) throws Exception {
+    /**
+     * Actualiza los datos del propio solicitante
+     * @param gas_aceptable
+     * @param usuario_nuevo
+     * @param clave_nueva (convertida a bytes utf-8)
+     * @param direccion_nueva
+     * @param ok
+     * @param extras_array
+     * @return
+     * @throws Exception 
+     */
+    public boolean actualizar_administrador_usuario_clave_direccion(BigInteger gas_aceptable, String usuario_nuevo, String clave_nueva, String direccion_nueva, oks ok, Object ... extras_array) throws Exception {
         try {
             if (ok.es == false) { return false; }
-            RemoteFunctionCall<TransactionReceipt> remoteFunctionCall = base.actualizar_administrador_clave(clave_nueva.getBytes());
+            if (usuario_nuevo == null) {
+                usuario_nuevo = "";
+            }
+            if (clave_nueva == null) {
+                clave_nueva = "";
+            }
+            if (direccion_nueva == null || direccion_nueva.isBlank()) {
+                direccion_nueva = "0x0000000000000000000000000000000000000000";
+            }
+            RemoteFunctionCall<TransactionReceipt> remoteFunctionCall = base.actualizar_administrador_usuario_clave_direccion(usuario_nuevo, clave_nueva.getBytes("utf-8"), direccion_nueva);
             TransactionReceipt transactionReceipt = web3j.firmar_y_llamar_funcion_con_gas(remoteFunctionCall, gas_aceptable, null, ok, extras_array);
             if (ok.es == false) { return false; }
         } catch (Exception e) {
@@ -239,19 +207,32 @@ public class Bases_web3j extends bases {
         }
         return ok.es;
     }
-    
-    public boolean actualizar_administrador(BigInteger gas_aceptable, acls acl, oks ok, Object ... extras_array) throws Exception {
+    /**
+     * Actualiza los datos de un administrador (si se tiene permiso)
+     * @param gas_aceptable
+     * @param direccion
+     * @param usuario_nuevo
+     * @param clave_nueva (convertida a bytes utf-8)
+     * @param direccion_nueva
+     * @param ok
+     * @param extras_array
+     * @return
+     * @throws Exception 
+     */
+    public boolean actualizar_administrador_usuario_clave_direccion(BigInteger gas_aceptable, String direccion, String usuario_nuevo, String clave_nueva, String direccion_nueva, oks ok, Object ... extras_array) throws Exception {
         try {
             if (ok.es == false) { return false; }
-            TransactionReceipt transactionReceipt;
-            Bases.acls bases_acl;
-            bases_acl = acl.convertir(ok, extras_array);
-            if (ok.es == false) { return false; }
-            RemoteFunctionCall<TransactionReceipt> remoteFunctionCall = base.actualizar_administrador(bases_acl);
-            transactionReceipt = remoteFunctionCall.send();
-            StringBuilder resultado = new StringBuilder();
-            transactionReceipt = web3j.firmar_y_llamar_funcion_con_gas(remoteFunctionCall, gas_aceptable, resultado, ok, extras_array);
-            List<Type> types_list = remoteFunctionCall.decodeFunctionResponse(resultado.toString());
+            if (usuario_nuevo == null) {
+                usuario_nuevo = "";
+            }
+            if (clave_nueva == null) {
+                clave_nueva = "";
+            }
+            if (direccion_nueva == null || direccion_nueva.isBlank()) {
+                direccion_nueva = "0x0000000000000000000000000000000000000000";
+            }
+            RemoteFunctionCall<TransactionReceipt> remoteFunctionCall = base.actualizar_administrador_usuario_clave_direccion(direccion, usuario_nuevo, clave_nueva.getBytes("utf-8"), direccion_nueva);
+            TransactionReceipt transactionReceipt = web3j.firmar_y_llamar_funcion_con_gas(remoteFunctionCall, gas_aceptable, null, ok, extras_array);
             if (ok.es == false) { return false; }
         } catch (Exception e) {
             ok.setTxt(e); 
@@ -259,4 +240,155 @@ public class Bases_web3j extends bases {
         return ok.es;
     }
 
+    public boolean actualizar_administrador_permisos_array(BigInteger gas_aceptable, String direccion, List<String> permisos_lista, oks ok, Object ... extras_array) throws Exception {
+        try {
+            if (ok.es == false) { return false; }
+            List <byte []> permisos_byte_arrays_lista = new LinkedList<>();
+            byte [] bytes_array;
+            for (String permiso: permisos_lista) {
+                bytes_array = Bytes__.ajustar(permiso.getBytes(), 32, ok, extras_array);
+                permisos_byte_arrays_lista.add(bytes_array);
+            }
+            RemoteFunctionCall<TransactionReceipt> remoteFunctionCall = base.actualizar_administrador_permisos_array(direccion, permisos_byte_arrays_lista);
+            TransactionReceipt transactionReceipt = web3j.firmar_y_llamar_funcion_con_gas(remoteFunctionCall, gas_aceptable, null, ok, extras_array);
+            if (ok.es == false) { return false; }
+        } catch (Exception e) {
+            ok.setTxt(e); 
+        }
+        return ok.es;
+    }
+    /**
+     * Crea un administrador nuevo
+     * @param gas_aceptable
+     * @param direccion
+     * @param usuario
+     * @param clave
+     * @param permisos_lista Lista de permisos. Puede ser null.
+     * @param ok
+     * @param extras_array
+     * @return
+     * @throws Exception 
+     */
+    public boolean crear_administrador(BigInteger gas_aceptable, String direccion, String usuario, String clave, List<String> permisos_lista, oks ok, Object ... extras_array) throws Exception {
+        try {
+            if (ok.es == false) { return false; }
+            List <byte []> permisos_byte_arrays_lista = new LinkedList<>();
+            byte [] bytes_array;
+            if (permisos_lista != null) {
+                for (String permiso: permisos_lista) {
+                    bytes_array = Bytes__.ajustar(permiso.getBytes(), 32, ok, extras_array);
+                    permisos_byte_arrays_lista.add(bytes_array);
+                }
+            }
+            byte [] clave_bytes_array = clave.getBytes("utf-8");
+            RemoteFunctionCall<TransactionReceipt> remoteFunctionCall = base.crear_administrador(direccion
+              , usuario, clave_bytes_array, permisos_byte_arrays_lista);
+            TransactionReceipt transactionReceipt = web3j.firmar_y_llamar_funcion_con_gas(remoteFunctionCall, gas_aceptable, null, ok, extras_array);
+            if (ok.es == false) { return false; }
+        } catch (Exception e) {
+            ok.setTxt(e); 
+        }
+        return ok.es;
+    }
+
+    public boolean borrar_administrador(BigInteger gas_aceptable, String direccion, oks ok, Object ... extras_array) throws Exception {
+        try {
+            if (ok.es == false) { return false; }
+            RemoteFunctionCall<TransactionReceipt> remoteFunctionCall = base.borrar_administrador(direccion);
+            TransactionReceipt transactionReceipt = web3j.firmar_y_llamar_funcion_con_gas(remoteFunctionCall, gas_aceptable, null, ok, extras_array);
+            if (ok.es == false) { return false; }
+        } catch (Exception e) {
+            ok.setTxt(e); 
+        }
+        return ok.es;
+    }
+
+    public Boolean ser_administrador(String direccion, oks ok, Object ... extras_array) throws Exception {
+        Boolean retorno = null;
+        try {
+            if (ok.es == false) { return null; }
+            RemoteFunctionCall<Boolean> remoteFunctionCall = base.ser_administrador(direccion);
+            EthCall ethCall = web3j.llamar_funcion_sin_gas(remoteFunctionCall, ok, extras_array);
+            if (ok.es == false) { return null; }
+            List<Type> types_list = remoteFunctionCall.decodeFunctionResponse(ethCall.getValue());
+            if (types_list != null) {
+                retorno = (Boolean) types_list.get(0).getValue();
+            }
+        } catch (Exception e) {
+            ok.setTxt(e); 
+        }
+        return retorno;
+    }
+
+    public Boolean ser_administrador_con_algun_permiso(String direccion, List<String> permisos_lista, oks ok, Object ... extras_array) throws Exception {
+        Boolean retorno = null;
+        try {
+            if (ok.es == false) { return null; }
+            List <byte []> permisos_byte_arrays_lista = new LinkedList<>();
+            byte [] bytes_array;
+            if (permisos_lista != null) {
+                for (String permiso: permisos_lista) {
+                    bytes_array = Bytes__.ajustar(permiso.getBytes(), 32, ok, extras_array);
+                    permisos_byte_arrays_lista.add(bytes_array);
+                }
+            }
+            RemoteFunctionCall<Boolean> remoteFunctionCall = base.ser_administrador_con_algun_permiso(direccion
+              , permisos_byte_arrays_lista);
+            EthCall ethCall = web3j.llamar_funcion_sin_gas(remoteFunctionCall, ok, extras_array);
+            if (ok.es == false) { return null; }
+            List<Type> types_list = remoteFunctionCall.decodeFunctionResponse(ethCall.getValue());
+            if (types_list != null) {
+                retorno = (Boolean) types_list.get(0).getValue();
+            }
+        } catch (Exception e) {
+            ok.setTxt(e); 
+        }
+        return retorno;
+    }
+
+    public Boolean ser_administrador_con_permiso(String direccion, String permiso, oks ok, Object ... extras_array) throws Exception {
+        Boolean retorno = null;
+        try {
+            if (ok.es == false) { return null; }
+            byte [] bytes_array;
+            bytes_array = Bytes__.ajustar(permiso.getBytes(), 32, ok, extras_array);
+            RemoteFunctionCall<Boolean> remoteFunctionCall = base.ser_administrador_con_permiso(direccion
+              , bytes_array);
+            EthCall ethCall = web3j.llamar_funcion_sin_gas(remoteFunctionCall, ok, extras_array);
+            if (ok.es == false) { return null; }
+            List<Type> types_list = remoteFunctionCall.decodeFunctionResponse(ethCall.getValue());
+            if (types_list != null) {
+                retorno = (Boolean) types_list.get(0).getValue();
+            }
+        } catch (Exception e) {
+            ok.setTxt(e); 
+        }
+        return retorno;
+    }
+
+    public Boolean ser_administrador_con_todo_permiso(String direccion, List<String> permisos_lista, oks ok, Object ... extras_array) throws Exception {
+        Boolean retorno = null;
+        try {
+            if (ok.es == false) { return null; }
+            List <byte []> permisos_byte_arrays_lista = new LinkedList<>();
+            byte [] bytes_array;
+            if (permisos_lista != null) {
+                for (String permiso: permisos_lista) {
+                    bytes_array = Bytes__.ajustar(permiso.getBytes(), 32, ok, extras_array);
+                    permisos_byte_arrays_lista.add(bytes_array);
+                }
+            }
+            RemoteFunctionCall<Boolean> remoteFunctionCall = base.ser_administrador_con_todo_permiso(direccion
+              , permisos_byte_arrays_lista);
+            EthCall ethCall = web3j.llamar_funcion_sin_gas(remoteFunctionCall, ok, extras_array);
+            if (ok.es == false) { return null; }
+            List<Type> types_list = remoteFunctionCall.decodeFunctionResponse(ethCall.getValue());
+            if (types_list != null) {
+                retorno = (Boolean) types_list.get(0).getValue();
+            }
+        } catch (Exception e) {
+            ok.setTxt(e); 
+        }
+        return retorno;
+    }
 }
