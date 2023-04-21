@@ -23,7 +23,6 @@ public class Hola_mundo_web3j extends iniciales {
     public static String k_in_ruta = "in/inclui/web3j/hola_mundo_web3j/in";  //NOI18N
     public static String k_wallet_ruta = "/re";  
     public static String k_web3_endpoint_https = "web3_endpoint_https";
-    public static String k_web3_endpoint_wss = "web3_endpoint_wss";
     public static String k_web3_archivo_EAO = "web3_archivo_EAO";
     public static String k_web3_clave_EAO = "web3_clave_EAO";
     public static String k_web3_direccion_contrato_hola_mundos = "web3_direccion_contrato_hola_mundos";
@@ -163,7 +162,6 @@ public class Hola_mundo_web3j extends iniciales {
             if (ok.es == false) { return false; }
             String texto;
             web3j.web3_endpoint_https = properties.getProperty(k_web3_endpoint_https);
-            web3j.web3_endpoint_wss = properties.getProperty(k_web3_endpoint_wss);
             web3j.web3_archivo_EAO = properties.getProperty(k_web3_archivo_EAO);
             web3j.web3_clave_EAO = properties.getProperty(k_web3_clave_EAO);
             web3j.web3_direccion_contrato = properties.getProperty(k_web3_direccion_contrato_hola_mundos);
